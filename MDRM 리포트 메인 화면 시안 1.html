@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MDRM 리포트 메인 화면</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "Noto Sans KR", "Roboto", sans-serif;
+            background: #f8fafc;
+            color: #1f2937;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+        
+        /* Global Header */
+        .global-header {
+            height: 56px;
+            background: #2d57ac;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            margin-right: 32px;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .nav-item {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+        
+        /* 메인 레이아웃 */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            height: calc(100vh - 56px);
+        }
+        
+        /* 좌측 트리 패널 */
+        .tree-panel {
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+              
+        .tree-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+        
+        .tree-folder {
+            margin-bottom: 4px;
+        }
+        
+        .folder-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            user-select: none;
+        }
+        
+        .folder-header:hover {
+            background: #f3f4f6;
+        }
+        
+        .folder-header.expanded {
+            background: #f1f5f9;
+        }
+        
+        .folder-toggle {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 10px;
+            color: #6b7280;
+            transition: transform 0.2s;
+        }
+        
+        .folder-toggle.expanded {
+            transform: rotate(90deg);
+        }
+        
+        .folder-icon {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+        
+        .folder-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .folder-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .folder-content.expanded {
+            max-height: 1000px;
+        }
+        
+        .template-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 20px 8px 44px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .template-item:hover {
+            background: #f8faff;
+            border-left-color: #1d4ed8;
+        }
+        
+        .template-item.selected {
+            background: #f0f9ff;
+            border-left-color: #1d4ed8;
+        }
+        
+        .template-icon {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+        
+        .template-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .template-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        /* 우측 메인 콘텐츠 */
+        .main-content {
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 상단 위젯 영역 */
+        .top-widgets-section {
+            background: white;
+            padding: 20px 32px;
+            border-bottom: 1px solid #e5e7eb;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            flex-shrink: 0;
+        }
+        
+        /* 인사이트 위젯 */
+        .insight-widget {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+        
+        .widget-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .widget-more {
+            color: #6b7280;
+            font-size: 11px;
+            text-decoration: none;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .widget-more:hover {
+            background: #f3f4f6;
+            color: #1d4ed8;
+        }
+        
+        /* 발행 예정 리스트 */
+        .schedule-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+        
+        .schedule-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border: 1px solid #f3f4f6;
+            border-radius: 6px;
+            transition: all 0.2s;
+            cursor: pointer;
+            flex-shrink: 0;
+            background: white;
+        }
+        
+        .schedule-item:hover {
+            border-color: #1d4ed8;
+            background: #f8faff;
+        }
+        
+        .schedule-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .schedule-time {
+            display: flex;
+            align-items: center;
+            min-width: 60px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #1d4ed8;
+        }
+        
+        .schedule-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .schedule-report-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1f2937;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .schedule-report-name .schedule-detail {
+            font-weight: 400;
+            color: #6b7280;
+            font-size: 10px;
+        }
+        
+        .schedule-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .action-icon {
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .action-icon:hover {
+            color: #1d4ed8;
+        }
+        
+        /* 최근 발행 리스트 */
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 200px;
+        }
+        
+        .recent-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border: 1px solid #f3f4f6;
+            border-radius: 6px;
+            transition: all 0.2s;
+            cursor: pointer;
+            flex-shrink: 0;
+            background: white;
+        }
+        
+        .recent-item:hover {
+            border-color: #1d4ed8;
+            background: #f8faff;
+        }
+        
+        .recent-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .recent-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+            background: #d1fae5;
+            color: #166534;
+        }
+        
+        .recent-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .recent-report-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1f2937;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .recent-report-name .recent-detail {
+            font-weight: 400;
+            color: #6b7280;
+            font-size: 10px;
+        }
+        
+        .recent-downloads {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #1d4ed8;
+            font-weight: 500;
+        }
+        
+        /* 테이블 섹션 */
+        .table-section {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            overflow: hidden;
+            flex: 1;
+        }
+        
+        /* 콘텐츠 헤더 */
+        .content-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .content-title-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .content-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .content-count {
+            background: #f3f4f6;
+            color: #6b7280;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: #1d4ed8;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1e40af;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 필터 바 */
+        .filter-bar {
+            padding: 16px 32px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: #f9fafb;
+            flex-shrink: 0;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .filter-label {
+            font-size: 14px;
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .filter-select {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            min-width: 120px;
+        }
+        
+        .bulk-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .selected-count {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        /* 테이블 영역 */
+        .table-container {
+            flex: 1;
+            overflow: auto;
+        }
+        
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .reports-table th {
+            background: #f9fafb;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .reports-table th:first-child {
+            width: 40px;
+            text-align: center;
+        }
+        
+        .reports-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+        }
+        
+        .reports-table td:first-child {
+            text-align: center;
+        }
+        
+        .reports-table tr:hover {
+            background: #f8faff;
+        }
+        
+        .report-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 200px;
+        }
+        
+        .report-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        
+        .report-icon.system {
+            background: #dbeafe;
+        }
+        
+        .report-icon.inspection {
+            background: #d1fae5;
+        }
+        
+        .report-icon.workflow {
+            background: #f3e8ff;
+        }
+        
+        .report-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 2px;
+        }
+        
+        .report-description {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        
+        .data-domain-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        
+        .data-tag {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .data-tag.system {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .data-tag.inspection {
+            background: #d1fae5;
+            color: #166534;
+        }
+        
+        .data-tag.workflow {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        
+        .schedule-info {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        
+        .schedule-frequency {
+            font-size: 14px;
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .schedule-next {
+            font-size: 11px;
+            color: #6b7280;
+        }
+        
+        .author-info {
+            font-size: 14px;
+            color: #374151;
+        }
+        
+        .last-published {
+            font-size: 14px;
+            color: #374151;
+        }
+        
+        .created-date {
+            font-size: 14px;
+            color: #374151;
+        }
+        
+        .subscriber-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #374151;
+        }
+        
+        .subscriber-icon {
+            color: #6b7280;
+            font-size: 12px;
+        }
+        
+        .subscriber-detail {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+        }
+        
+        .download-count {
+            color: #1d4ed8;
+            font-size: 14px;
+        }
+        
+        .action-btn {
+            padding: 4px 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #f3f4f6;
+        }
+        
+        .sort-header {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        
+        .sort-header:hover {
+            background: #f3f4f6;
+        }
+        
+        .sort-header::after {
+            content: '↕️';
+            position: absolute;
+            right: 8px;
+            opacity: 0.5;
+            font-size: 10px;
+        }
+        
+        .sort-header.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+        
+        .sort-header.sort-desc::after {
+            content: '↓';
+            opacity: 1;
+        }
+        
+        /* 페이징 스타일 */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px 32px;
+            border-top: 1px solid #e5e7eb;
+            background: #f9fafb;
+        }
+        
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .pagination-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        
+        .pagination-btn:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        .pagination-btn.active {
+            background: #1d4ed8;
+            color: white;
+            border-color: #1d4ed8;
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f9fafb;
+        }
+        
+        .pagination-btn:disabled:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+        
+        .pagination-ellipsis {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        /* 체크박스 스타일 */
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #1d4ed8;
+        }
+        
+        /* 스크롤바 스타일 */
+        .schedule-list::-webkit-scrollbar,
+        .recent-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .schedule-list::-webkit-scrollbar-track,
+        .recent-list::-webkit-scrollbar-track {
+            background: #f1f3f4;
+            border-radius: 2px;
+        }
+        
+        .schedule-list::-webkit-scrollbar-thumb,
+        .recent-list::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 2px;
+        }
+        
+        .schedule-list::-webkit-scrollbar-thumb:hover,
+        .recent-list::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            min-width: 120px;
+            z-index: 1000;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: #374151;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-item:first-child {
+            border-radius: 6px 6px 0 0;
+        }
+
+        .dropdown-item:last-child {
+            border-radius: 0 0 6px 6px;
+        }
+
+        .dropdown-item:hover {
+            background: #f3f4f6;
+        }
+
+        .dropdown-item#bulkDelete {
+            color: #dc2626;
+        }
+
+        .dropdown-item#bulkDelete:hover {
+            background: #fee2e2;
+        }
+        
+        /* 반응형 */
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .tree-panel {
+                height: 200px;
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            
+            .top-widgets-section {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Header -->
+    <header class="global-header">
+        <div class="logo"> MDRM</div>
+        <nav class="nav">
+            <a href="#" class="nav-item">대시보드</a>
+            <a href="#" class="nav-item">시스템</a>
+            <a href="#" class="nav-item">워크플로우</a>
+            <a href="#" class="nav-item">점검작업</a>
+            <a href="#" class="nav-item active">리포트</a>
+        </nav>
+    </header>
+
+    <div class="main-layout">
+        <!-- 좌측 트리 패널 -->
+        <aside class="tree-panel">
+           
+            <div class="tree-container">
+                <div class="tree-folder">
+                    <div class="folder-header expanded">
+                        <span class="folder-toggle expanded">▶</span>
+                        <span class="folder-icon">📁</span>
+                        <span class="folder-name">Production</span>
+                    </div>
+                    <div class="folder-content expanded">
+                        <div class="template-item selected">
+                            <span class="template-icon">　📁</span>
+                            <div class="template-info">
+                                <div class="template-name">시스템 관리</div>
+                            </div>
+                        </div>
+                        <div class="template-item">
+                            <span class="template-icon">　📁</span>
+                            <div class="template-info">
+                                <div class="template-name">점검작업</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tree-folder">
+                    <div class="folder-header">
+                        <span class="folder-toggle">▶</span>
+                        <span class="folder-icon">📁</span>
+                        <span class="folder-name">Development</span>
+                    </div>
+                    <div class="folder-content">
+                        <div class="template-item">
+                            <span class="template-icon">　📁</span>
+                            <div class="template-info">
+                                <div class="template-name">워크플로우 관리</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tree-folder">
+                    <div class="folder-header">
+                        <span class="folder-toggle">▶</span>
+                        <span class="folder-icon">📁</span>
+                        <span class="folder-name">운영 현황</span>
+                    </div>
+                    <div class="folder-content">
+                        <div class="template-item">
+                            <span class="template-icon">　📁</span>
+                            <div class="template-info">
+                                <div class="template-name">인프라 현황</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 우측 메인 콘텐츠 -->
+        <main class="main-content">
+            <!-- 상단 위젯 영역 -->
+            <div class="top-widgets-section">
+                <!-- 발행 예정 위젯 -->
+                <div class="insight-widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title">📅 발행 예정</h3>
+                        <a href="#" class="widget-more">전체보기</a>
+                    </div>
+                    
+                    <div class="schedule-list">
+                        <div class="schedule-item">
+                            <div class="schedule-left">
+                                <div class="schedule-time">1월 27일</div>
+                                <div class="schedule-info">
+                                    <div class="schedule-report-name">DB 백업 Wiz 리포트 <span class="schedule-detail">매주 • 오전 10:00</span></div>
+                                </div>
+                            </div>
+                            <div class="schedule-actions">
+                                <span class="action-icon">⚙️</span>
+                            </div>
+                        </div>
+                        
+                        <div class="schedule-item">
+                            <div class="schedule-left">
+                                <div class="schedule-time">1월 30일</div>
+                                <div class="schedule-info">
+                                    <div class="schedule-report-name">시스템 성능 변경 내역 <span class="schedule-detail">매월 • 오후 2:00</span></div>
+                                </div>
+                            </div>
+                            <div class="schedule-actions">
+                                <span class="action-icon">⚙️</span>
+                            </div>
+                        </div>
+                        
+                        <div class="schedule-item">
+                            <div class="schedule-left">
+                                <div class="schedule-time">2월 1일</div>
+                                <div class="schedule-info">
+                                    <div class="schedule-report-name">WEB 서비스 점검 <span class="schedule-detail">매주 • 오전 9:00</span></div>
+                                </div>
+                            </div>
+                            <div class="schedule-actions">
+                                <span class="action-icon">⚙️</span>
+                            </div>
+                        </div>
+                        
+                        <div class="schedule-item">
+                            <div class="schedule-left">
+                                <div class="schedule-time">2월 2일</div>
+                                <div class="schedule-info">
+                                    <div class="schedule-report-name">OS 보안 점검 <span class="schedule-detail">매주 • 오전 6:00</span></div>
+                                </div>
+                            </div>
+                            <div class="schedule-actions">
+                                <span class="action-icon">⚙️</span>
+                            </div>
+                        </div>
+                        
+                        <div class="schedule-item">
+                            <div class="schedule-left">
+                                <div class="schedule-time">2월 3일</div>
+                                <div class="schedule-info">
+                                    <div class="schedule-report-name">주간 운영 보고 <span class="schedule-detail">매주 • 오후 5:00</span></div>
+                                </div>
+                            </div>
+                            <div class="schedule-actions">
+                                <span class="action-icon">⚙️</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 최근 발행 위젯 -->
+                <div class="insight-widget">
+                    <div class="widget-header">
+                        <h3 class="widget-title">📋 최근 발행</h3>
+                        <a href="#" class="widget-more">전체보기</a>
+                    </div>
+                    
+                    <div class="recent-list">
+                        <div class="recent-item">
+                            <div class="recent-left">
+                                <div class="recent-status">✅</div>
+                                <div class="recent-info">
+                                    <div class="recent-report-name">주간 운영 보고 <span class="recent-detail">2시간 전</span></div>
+                                </div>
+                            </div>
+                            <div class="recent-downloads">
+                                <span>📥</span>
+                                <span>12회</span>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-item">
+                            <div class="recent-left">
+                                <div class="recent-status">✅</div>
+                                <div class="recent-info">
+                                    <div class="recent-report-name">DB 백업 Wiz 리포트 <span class="recent-detail">어제 10:00</span></div>
+                                </div>
+                            </div>
+                            <div class="recent-downloads">
+                                <span>📥</span>
+                                <span>8회</span>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-item">
+                            <div class="recent-left">
+                                <div class="recent-status">✅</div>
+                                <div class="recent-info">
+                                    <div class="recent-report-name">OS 보안 점검 <span class="recent-detail">어제 06:00</span></div>
+                                </div>
+                            </div>
+                            <div class="recent-downloads">
+                                <span>📥</span>
+                                <span>15회</span>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-item">
+                            <div class="recent-left">
+                                <div class="recent-status">✅</div>
+                                <div class="recent-info">
+                                    <div class="recent-report-name">WEB 서비스 점검 <span class="recent-detail">2일 전</span></div>
+                                </div>
+                            </div>
+                            <div class="recent-downloads">
+                                <span>📥</span>
+                                <span>4회</span>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-item">
+                            <div class="recent-left">
+                                <div class="recent-status">✅</div>
+                                <div class="recent-info">
+                                    <div class="recent-report-name">자동화 프로세스 현황 <span class="recent-detail">3일 전</span></div>
+                                </div>
+                            </div>
+                            <div class="recent-downloads">
+                                <span>📥</span>
+                                <span>23회</span>
+                            </div>
+                        </div>
+                        
+                        <div class="recent-item">
+                            <div class="recent-left">
+                                <div class="recent-status">✅</div>
+                                <div class="recent-info">
+                                    <div class="recent-report-name">데이터베이스 성능 점검 <span class="recent-detail">4일 전</span></div>
+                                </div>
+                            </div>
+                            <div class="recent-downloads">
+                                <span>📥</span>
+                                <span>7회</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 테이블 섹션 -->
+            <div class="table-section">
+                <!-- 콘텐츠 헤더 -->
+                <div class="content-header">
+                    <div class="content-title-section">
+                        <h1 class="content-title">시스템 관리</h1>
+                        <span class="content-count" id="reportCount">9개</span>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary">+ 리포트 추가</button>
+                    </div>
+                </div>
+                
+                <!-- 필터 바 -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label class="filter-label">데이터 유형</label>
+                        <select class="filter-select">
+                            <option value="all">전체</option>
+                            <option value="system">시스템</option>
+                            <option value="inspection">점검작업</option>
+                            <option value="workflow">워크플로우</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label class="filter-label">발행 주기</label>
+                        <select class="filter-select">
+                            <option value="all">전체</option>
+                            <option value="once">한 번</option>
+                            <option value="weekly">매주</option>
+                            <option value="monthly">매월</option>
+                            <option value="yearly">매년</option>
+                        </select>
+                    </div>
+                    <div class="bulk-actions">
+                        <span class="selected-count" id="selectedCount">선택된 항목 없음</span>
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" id="bulkActionsBtn" disabled>
+                                일괄 작업 ▼
+                            </button>
+                            <div class="dropdown-menu" id="bulkActionsMenu">
+                                <a href="#" class="dropdown-item" id="bulkCopy">복사</a>
+                                <a href="#" class="dropdown-item" id="bulkDelete">삭제</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 테이블 -->
+                <div class="table-container">
+                    <table class="reports-table">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll"></th>
+                                <th class="sort-header">이름</th>
+                                <th class="sort-header">데이터 유형</th>
+                                <th class="sort-header">발행 주기</th>
+                                <th class="sort-header">작성자</th>
+                                <th class="sort-header">최근 발행일</th>
+                                <th class="sort-header">구독/다운로드</th>
+                                <th class="sort-header">생성일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody">
+                            <tr>
+                                <td><input type="checkbox" class="row-select"></td>
+                                <td>
+                                    <div class="report-name-cell">
+                                        <div class="report-name">DB 백업 Wiz 리포트</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="data-domain-tags">
+                                        <span class="data-tag system">시스템</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-frequency">매주</span>
+                                        <span class="schedule-next">　다음: 2025.01.30</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="author-info">김민수</div>
+                                </td>
+                                <td>
+                                    <div class="last-published">2025.01.20</div>
+                                </td>
+                                <td>
+                                    <div class="subscriber-count">
+                                        <div class="subscriber-detail">
+                                            <span class="subscriber-icon">👥</span>
+                                            <span>8명</span>
+                                        </div>
+                                        <div class="download-count">📥 23회</div>
+                                    </div>
+                                </td>
+                                <td><div class="created-date">2025.01.10</div></td>
+                                <td>
+                                    <button class="action-btn">⚙️</button>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td><input type="checkbox" class="row-select"></td>
+                                <td>
+                                    <div class="report-name-cell">
+                                        <div class="report-name">시스템 성능 변경 내역</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="data-domain-tags">
+                                        <span class="data-tag system">시스템</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-frequency">매월</span>
+                                        <span class="schedule-next">　다음: 2025.02.01</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="author-info">박지영</div>
+                                </td>
+                                <td>
+                                    <div class="last-published">2025.01.18</div>
+                                </td>
+                                <td>
+                                    <div class="subscriber-count">
+                                        <div class="subscriber-detail">
+                                            <span class="subscriber-icon">👥</span>
+                                            <span>12명</span>
+                                        </div>
+                                        <div class="download-count">📥 35회</div>
+                                    </div>
+                                </td>
+                                <td><div class="created-date">2024.12.15</div></td>
+                                <td>
+                                    <button class="action-btn">⚙️</button>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td><input type="checkbox" class="row-select"></td>
+                                <td>
+                                    <div class="report-name-cell">
+                                        <div class="report-name">주간 운영 보고</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="data-domain-tags">
+                                        <span class="data-tag inspection">점검작업</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-frequency">매주</span>
+                                        <span class="schedule-next">　다음: 2025.02.03</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="author-info">이준호</div>
+                                </td>
+                                <td>
+                                    <div class="last-published">2025.01.22</div>
+                                </td>
+                                <td>
+                                    <div class="subscriber-count">
+                                        <div class="subscriber-detail">
+                                            <span class="subscriber-icon">👥</span>
+                                            <span>15명</span>
+                                        </div>
+                                        <div class="download-count">📥 67회</div>
+                                    </div>
+                                </td>
+                                <td><div class="created-date">2024.11.20</div></td>
+                                <td>
+                                    <button class="action-btn">⚙️</button>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td><input type="checkbox" class="row-select"></td>
+                                <td>
+                                    <div class="report-name-cell">
+                                        <div class="report-name">OS 보안 점검</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="data-domain-tags">
+                                        <span class="data-tag system">시스템</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-frequency">매주</span>
+                                        <span class="schedule-next">　다음: 2025.02.02</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="author-info">최우진</div>
+                                </td>
+                                <td>
+                                    <div class="last-published">2025.01.15</div>
+                                </td>
+                                <td>
+                                    <div class="subscriber-count">
+                                        <div class="subscriber-detail">
+                                            <span class="subscriber-icon">👥</span>
+                                            <span>6명</span>
+                                        </div>
+                                        <div class="download-count">📥 18회</div>
+                                    </div>
+                                </td>
+                                <td><div class="created-date">2024.10.08</div></td>
+                                <td>
+                                    <button class="action-btn">⚙️</button>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td><input type="checkbox" class="row-select"></td>
+                                <td>
+                                    <div class="report-name-cell">
+                                        <div class="report-name">자동화 프로세스 현황</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="data-domain-tags">
+                                        <span class="data-tag workflow">워크플로우</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-frequency">매월</span>
+                                        <span class="schedule-next">　다음: 2025.02.28</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="author-info">정민아</div>
+                                </td>
+                                <td>
+                                    <div class="last-published">2025.01.12</div>
+                                </td>
+                                <td>
+                                    <div class="subscriber-count">
+                                        <div class="subscriber-detail">
+                                            <span class="subscriber-icon">👥</span>
+                                            <span>9명</span>
+                                        </div>
+                                        <div class="download-count">📥 42회</div>
+                                    </div>
+                                </td>
+                                <td><div class="created-date">2024.09.14</div></td>
+                                <td>
+                                    <button class="action-btn">⚙️</button>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td><input type="checkbox" class="row-select"></td>
+                                <td>
+                                    <div class="report-name-cell">
+                                        <div class="report-name">WEB 서비스 점검</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="data-domain-tags">
+                                        <span class="data-tag system">시스템</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-frequency">매주</span>
+                                        <span class="schedule-next">　다음: 2025.02.01</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="author-info">강태현</div>
+                                </td>
+                                <td>
+                                    <div class="last-published">2025.01.19</div>
+                                </td>
+                                <td>
+                                    <div class="subscriber-count">
+                                        <div class="subscriber-detail">
+                                            <span class="subscriber-icon">👥</span>
+                                            <span>4명</span>
+                                        </div>
+                                        <div class="download-count">📥 12회</div>
+                                    </div>
+                                </td>
+                                <td><div class="created-date">2024.08.22</div></td>
+                                <td>
+                                    <button class="action-btn">⚙️</button>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td><input type="checkbox" class="row-select"></td>
+                                <td>
+                                    <div class="report-name-cell">
+                                        <div class="report-name">데이터베이스 성능 점검</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="data-domain-tags">
+                                        <span class="data-tag system">시스템</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-frequency">매월</span>
+                                        <span class="schedule-next">　다음: 2025.03.01</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="author-info">윤서연</div>
+                                </td>
+                                <td>
+                                    <div class="last-published">2025.01.10</div>
+                                </td>
+                                <td>
+                                    <div class="subscriber-count">
+                                        <div class="subscriber-detail">
+                                            <span class="subscriber-icon">👥</span>
+                                            <span>7명</span>
+                                        </div>
+                                        <div class="download-count">📥 29회</div>
+                                    </div>
+                                </td>
+                                <td><div class="created-date">2024.07.03</div></td>
+                                <td>
+                                    <button class="action-btn">⚙️</button>
+                                </td>
+                            </tr>
+                        
+                            <tr>
+                                <td><input type="checkbox" class="row-select"></td>
+                                <td>
+                                    <div class="report-name-cell">
+                                        <div class="report-name">인증서 갱신 현황</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="data-domain-tags">
+                                        <span class="data-tag system">시스템</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-info">
+                                        <span class="schedule-frequency">한 번</span>
+                                        <span class="schedule-next">　</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="author-info">송현준</div>
+                                </td>
+                                <td>
+                                    <div class="last-published">2025.01.08</div>
+                                </td>
+                                <td>
+                                    <div class="subscriber-count">
+                                        <div class="subscriber-detail">
+                                            <span class="subscriber-icon">👥</span>
+                                            <span>5명</span>
+                                        </div>
+                                        <div class="download-count">📥 8회</div>
+                                    </div>
+                                </td>
+                                <td><div class="created-date">2024.12.28</div></td>
+                                <td>
+                                    <button class="action-btn">⚙️</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 페이징 -->
+                <div class="pagination-container">
+                    <div class="pagination">
+                        <button class="pagination-btn" id="prevBtn" disabled>
+                            &lt;
+                        </button>
+                        <button class="pagination-btn active">1</button>
+                        <button class="pagination-btn">2</button>
+                        <span class="pagination-ellipsis">...</span>
+                        <button class="pagination-btn">5</button>
+                        <button class="pagination-btn" id="nextBtn">
+                            &gt;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 폴더 토글
+        function toggleFolder(element) {
+            const toggle = element.querySelector('.folder-toggle');
+            const content = element.nextElementSibling;
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                toggle.classList.remove('expanded');
+                element.classList.remove('expanded');
+            } else {
+                content.classList.add('expanded');
+                toggle.classList.add('expanded');
+                element.classList.add('expanded');
+            }
+        }
+        
+        // 템플릿 선택
+        function selectTemplate(element, categoryName, count) {
+            document.querySelectorAll('.template-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            element.classList.add('selected');
+            
+            document.querySelector('.content-title').textContent = categoryName;
+            document.querySelector('#reportCount').textContent = count + '개';
+        }
+        
+        // 전체 선택 토글
+        function toggleSelectAll(checkbox) {
+            const rowCheckboxes = document.querySelectorAll('.row-select');
+            rowCheckboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+            updateBulkActions();
+        }
+        
+        // 일괄 작업 버튼 상태 업데이트
+        function updateBulkActions() {
+            const selectedCheckboxes = document.querySelectorAll('.row-select:checked');
+            const count = selectedCheckboxes.length;
+            
+            const selectedCountElement = document.getElementById('selectedCount');
+            const bulkActionsBtn = document.getElementById('bulkActionsBtn');
+            
+            if (count > 0) {
+                selectedCountElement.textContent = `${count}개 선택됨`;
+                bulkActionsBtn.disabled = false;
+            } else {
+                selectedCountElement.textContent = '선택된 항목 없음';
+                bulkActionsBtn.disabled = true;
+            }
+            
+            const allCheckboxes = document.querySelectorAll('.row-select');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            
+            if (count === allCheckboxes.length) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else if (count > 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
+        }
+        
+        // 이벤트 리스너 추가
+        document.addEventListener('DOMContentLoaded', function() {
+            // 폴더 헤더 클릭 이벤트
+            document.querySelectorAll('.folder-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    toggleFolder(this);
+                });
+            });
+            
+            // 템플릿 아이템 클릭 이벤트
+            document.querySelectorAll('.template-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const categoryName = this.querySelector('.template-name').textContent;
+                    const count = Math.floor(Math.random() * 15) + 5; // 임시 카운트
+                    selectTemplate(this, categoryName, count);
+                });
+            });
+            
+            // 전체 선택 체크박스 이벤트
+            document.getElementById('selectAll').addEventListener('change', function() {
+                toggleSelectAll(this);
+            });
+            
+            // 개별 체크박스 이벤트
+            document.querySelectorAll('.row-select').forEach(checkbox => {
+                checkbox.addEventListener('change', updateBulkActions);
+            });
+            
+            // 위젯 아이템 클릭 시 테이블 하이라이트
+            document.querySelectorAll('.schedule-item, .recent-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const reportName = this.querySelector('.schedule-report-name, .recent-report-name').textContent;
+                    
+                    const tableRows = document.querySelectorAll('#reportsTableBody tr');
+                    tableRows.forEach(row => {
+                        const tableName = row.querySelector('.report-name').textContent;
+                        if (tableName.includes(reportName) || reportName.includes(tableName)) {
+                            row.style.backgroundColor = '#fef3c7';
+                            setTimeout(() => {
+                                row.style.backgroundColor = '';
+                            }, 2000);
+                            
+                            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                });
+            });
+
+            // 드롭다운 토글
+            const bulkActionsBtn = document.getElementById('bulkActionsBtn');
+            const bulkActionsMenu = document.getElementById('bulkActionsMenu');
+            
+            bulkActionsBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                bulkActionsMenu.classList.toggle('show');
+            });
+            
+            // 드롭다운 외부 클릭 시 닫기
+            document.addEventListener('click', function() {
+                bulkActionsMenu.classList.remove('show');
+            });
+            
+            // 드롭다운 메뉴 항목 클릭
+            document.getElementById('bulkCopy').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('복사 기능 실행');
+                bulkActionsMenu.classList.remove('show');
+            });
+            
+            document.getElementById('bulkDelete').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('선택한 항목을 삭제하시겠습니까?')) {
+                    alert('삭제 기능 실행');
+                }
+                bulkActionsMenu.classList.remove('show');
+            });
+                    
+            console.log('MDRM 리포트 메인화면 초기화 완료');
+        });
+    </script>
+</body>
+</html>
